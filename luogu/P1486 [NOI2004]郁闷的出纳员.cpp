@@ -64,7 +64,7 @@ void Insert(int x){
 	splay(cur);
 }
 void fid(int x){
-	//åŽŸæ•°çš„å‰é©±æˆ–è€…åŽç»§ 
+	//Ô­ÊýµÄÇ°Çý»òÕßºó¼Ì 
 	if(!rt)return ;
 	int cur=rt;
 	while(son(cur,x>val(cur))&&val(cur)!=x)
@@ -114,6 +114,7 @@ int main()
 	printf("%d\n",sum-siz(rt));
 	return 0;
 }
+
 
 
 
