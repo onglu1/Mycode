@@ -21,28 +21,30 @@ int head[N],nxt[N],ver[N],idd[N],edge[N],tot=1;
 void add(int u,int v,int w,int i){
 	ver[++tot]=v;nxt[tot]=head[u];head[u]=tot;idd[tot]=i;edge[tot]=w;
 }
-int tree[N][3],laz[N],rev[N];
+int tree[N][3],rev[N];
 void update(int rt){
 	maxn(rt)=max(maxn(ls),maxn(rs));
 	minn(rt)=min(minn(ls),minn(ls));
 	sum(rt)=sum(ls)+sum(rs);
 }
 void pushdown(int l,int r,int rt){
-	
+	if(!rev[rt])continue;
+	int t1,t2;
+	rev[ls]^=1;rev[rs]^=1;rev[rt]=0;
+	t1=maxn(ls);t2=minn(ls);
+	sum(ls)=-sum(ls);maxn(ls)=-t2;minn(ls)=-t1;
+	t1=maxn(rs);t2=minn(rs);
+	sum(rs)=-sum(rs);maxn(rs)=-t2;minn(rs)=-t1;
 }
 void build(int l,int r,int rt){
-	if(l==r){
-		maxn(rt)=minn(rt)=sum(rt)=val[l];
-		return ;
-	}
+	if(l==r)maxn(rt)=minn(rt)=sum(rt)=val[l],return;
 	build(l,Mid,ls);build(Mid+1,r,rs);
 	update(rt);
 }
-/*
 int query(int l,int r,int L,int R,int rt,int opt){
-	if(L<=l&&r<=R){}
+	if(L<=l&&r<=R)return tree[rt][opt];
+	
 }
-*/
 
 
 //树剖部分 
