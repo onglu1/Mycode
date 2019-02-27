@@ -1,0 +1,126 @@
+#include <bits/stdc++.h>
+#define ll long long
+#define ull unsigned long long
+#define Mid ((l+r)>>1)
+#define ls (rt<<1)
+#define rs (rt<<1|1)
+#define sum(x) tree[x][0]
+#define maxn(x) tree[x][1]
+#define minn(x) tree[x][2]
+using namespace std;
+const int N=5e5+1009;
+int read(){
+	char c;int num,f=1;
+	while(c=getchar(),!isdigit(c))if(c=='-')f=-1;num=c-'0';
+	while(c=getchar(), isdigit(c))num=num*10+c-'0';
+	return f*num;
+}
+char opt[19];
+int n,siz[N],son[N],id[N],top[N],fa[N],val[N];
+int head[N],nxt[N],ver[N],idd[N],edge[N],tot=1;
+void add(int u,int v,int w,int i){
+	ver[++tot]=v;nxt[tot]=head[u];head[u]=tot;idd[tot]=i;edge[tot]=w;
+}
+int tree[N][3],laz[N],rev[N];
+void update(int rt){
+	maxn(rt)=max(maxn(ls),maxn(rs));
+	minn(rt)=min(minn(ls),minn(ls));
+	sum(rt)=sum(ls)+sum(rs);
+}
+void pushdown(int l,int r,int rt){
+	
+}
+void build(int l,int r,int rt){
+	if(l==r){
+		maxn(rt)=minn(rt)=sum(rt)=val[l];
+		return ;
+	}
+	build(l,Mid,ls);build(Mid+1,r,rs);
+	update(rt);
+}
+/*
+int query(int l,int r,int L,int R,int rt,int opt){
+	if(L<=l&&r<=R){}
+}
+*/
+
+
+//树剖部分 
+void dfs1(int x,int pre){
+	siz[x]=1;fa[x]=pre;
+	for(int i=head[x];i;i=nxt[i]){
+		if(ver[i]==pre)continue;
+		val[ver[i]]=edge[i];
+		dfs1(ver[i],x);
+		siz[x]+=siz[ver[i]];
+		if(siz[son[x]]<siz[ver[i]])son[x]=ver[i];
+	}
+}
+void dfs2(int x,int ltp){
+	id[x]=++tot;top[x]=ltp;
+	if(son[x])dfs2(son[x],ltp);
+	for(int i=head[x];i;i=nxt[i]){
+		if(ver[i]==fa[x]||ver[i]==son[x])continue;
+		dfs2(ver[i],ver[i]);
+	}
+}
+
+
+
+void Change(int x,int w){
+	
+}
+int main()
+{
+	n=read();
+	for(int i=1;i<n;i++){
+		int u=read(),v=read(),w=read();
+		add(u,v,w,i);
+		add(v,u,w,i);
+	}
+	tot=0;
+	dfs1(1,0);dfs2(1,1);
+	build(1,n,1);
+	int m=read();
+	for(int i=1;i<=m;i++){
+		scanf("%s",opt);
+		int u,v;
+		u=read();v=read();
+		//if(opt[0]=='C')Change(u,v);
+		//if(opt[0]=='N')Reverse(u,v);
+		//if(opt[0]=='S')Query(u,v,0);
+		//if(opt[0]=='M'&&opt[1]=='A')Query(u,v,1);
+		//if(opt[0]=='M'&&opt[1]=='I')Query(u,v,2);
+	}
+	return 0;
+}
+
+/*
+树上边权操作题，5个操作
+C操作：把i条边的权值变为w
+N操作：把从u到v的路径上每一个边权都变成原来的相反数
+SUM操作：询问u到v的边权和
+MAX操作：询问u到v的边权最大值
+MIN操作：询问u到v的边权最小值
+*/
+/*
+明显是一道树剖的题目，但是我们要维护的是边权
+考虑怎么转移边权到点权，显然是转移到边连接的儿子节点
+（连接的父亲有多个儿子，而儿子只有一个父亲）
+C操作，查询边所在的点的编号，在线段树上把它改为w
+N操作，u到v的路径上，除了lca的点全部取反
+SUM操作,u到v的路径上，除了lca的点询问和
+MAX,MIN操作同上
+*/ 
+
+
+
+
+
+
+
+
+
+
+
+ 
