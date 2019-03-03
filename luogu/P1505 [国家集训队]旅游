@@ -9,6 +9,7 @@
 #define minn(x) tree[x][2]
 using namespace std;
 const int N=5e5+1009;
+const int inf=(1<<31)-1;
 int read(){
 	char c;int num,f=1;
 	while(c=getchar(),!isdigit(c))if(c=='-')f=-1;num=c-'0';
@@ -16,43 +17,89 @@ int read(){
 	return f*num;
 }
 char opt[19];
+int dep[N],eton[N],ntoe[N],rl[N];
 int n,siz[N],son[N],id[N],top[N],fa[N],val[N];
 int head[N],nxt[N],ver[N],idd[N],edge[N],tot=1;
 void add(int u,int v,int w,int i){
 	ver[++tot]=v;nxt[tot]=head[u];head[u]=tot;idd[tot]=i;edge[tot]=w;
 }
-int tree[N][3],rev[N];
+
+//线段树部分 (完工)
+
+//交换后取负 
+void Rswap(int &a,int &b){
+	swap(a,b);
+	//a^=b;b^=a;a^=b;
+	a=-a;b=-b;
+}
+int tree[N*4][3],rev[N*4];
 void update(int rt){
 	maxn(rt)=max(maxn(ls),maxn(rs));
-	minn(rt)=min(minn(ls),minn(ls));
+	minn(rt)=min(minn(ls),minn(rs));
 	sum(rt)=sum(ls)+sum(rs);
 }
 void pushdown(int l,int r,int rt){
-	if(!rev[rt])continue;
-	int t1,t2;
+	if(!rev[rt])return ;
 	rev[ls]^=1;rev[rs]^=1;rev[rt]=0;
-	t1=maxn(ls);t2=minn(ls);
-	sum(ls)=-sum(ls);maxn(ls)=-t2;minn(ls)=-t1;
-	t1=maxn(rs);t2=minn(rs);
-	sum(rs)=-sum(rs);maxn(rs)=-t2;minn(rs)=-t1;
+	sum(ls)=-sum(ls);Rswap(minn(ls),maxn(ls));
+	sum(rs)=-sum(rs);Rswap(minn(rs),maxn(rs));
 }
 void build(int l,int r,int rt){
-	if(l==r)maxn(rt)=minn(rt)=sum(rt)=val[l],return;
+	if(l==r){maxn(rt)=minn(rt)=sum(rt)=val[rl[l]];return;}
 	build(l,Mid,ls);build(Mid+1,r,rs);
 	update(rt);
 }
+//0是求和,1是最大，2是最小 
 int query(int l,int r,int L,int R,int rt,int opt){
 	if(L<=l&&r<=R)return tree[rt][opt];
-	
+	pushdown(l,r,rt);
+	int ans;
+	if(Mid<L)return query(Mid+1,r,L,R,rs,opt);
+	if(Mid>=R)return query(l,Mid,L,R,ls,opt);
+	ans=query(l,Mid,L,R,ls,opt);
+	if(opt==0)ans+=query(Mid+1,r,L,R,rs,opt);
+	if(opt==1)ans=max(ans,query(Mid+1,r,L,R,rs,opt));
+	if(opt==2)ans=min(ans,query(Mid+1,r,L,R,rs,opt));
+	return ans;
+}
+//把x位置改为w 
+void modify(int l,int r,int x,int rt,int w){
+	//cout<<l<<" "<<r<<endl;
+	if(l==r){
+		sum(rt)=maxn(rt)=minn(rt)=w;
+		return ;
+	}
+	pushdown(l,r,rt);
+	if(x<=Mid)modify(l,Mid,x,ls,w);
+	else modify(Mid+1,r,x,rs,w);
+	update(rt);
+}
+//反转L,R区间 
+void Mrev(int l,int r,int L,int R,int rt){
+	if(L<=l&&r<=R){
+		rev[rt]^=1;
+		sum(rt)=-sum(rt);Rswap(minn(rt),maxn(rt));
+		return ;
+	}
+	pushdown(l,r,rt);
+	if(L<=Mid)Mrev(l,Mid,L,R,ls);
+	if(Mid< R)Mrev(Mid+1,r,L,R,rs);
+	update(rt);
 }
 
 
 //树剖部分 
+
+//初始化部分 
 void dfs1(int x,int pre){
 	siz[x]=1;fa[x]=pre;
 	for(int i=head[x];i;i=nxt[i]){
 		if(ver[i]==pre)continue;
+		eton[idd[i]]=ver[i];
+		ntoe[ver[i]]=idd[i];
 		val[ver[i]]=edge[i];
+		dep[ver[i]]=dep[x]+1;
+		//if(x==2&&ver[i]==4)cout<<val[ver[i]]<<endl;
 		dfs1(ver[i],x);
 		siz[x]+=siz[ver[i]];
 		if(siz[son[x]]<siz[ver[i]])son[x]=ver[i];
@@ -60,6 +107,7 @@ void dfs1(int x,int pre){
 }
 void dfs2(int x,int ltp){
 	id[x]=++tot;top[x]=ltp;
+	rl[tot]=x;
 	if(son[x])dfs2(son[x],ltp);
 	for(int i=head[x];i;i=nxt[i]){
 		if(ver[i]==fa[x]||ver[i]==son[x])continue;
@@ -67,33 +115,134 @@ void dfs2(int x,int ltp){
 	}
 }
 
+//操作部分 
 
+//把x点的权值改为w 
+void Change(int x,int w){modify(1,n,x,1,w);}
 
-void Change(int x,int w){
-	
+//反转链u到v的权值
+
+void Reverse(int u,int v){
+	if(u==v)return ;
+	while(top[u]!=top[v]){
+		if(dep[top[u]]<dep[top[v]])swap(u,v);
+//		cout<<"id:"<<u<<" "<<v<<endl;
+		Mrev(1,n,id[top[u]],id[u],1);
+		u=fa[top[u]];
+	}
+	if(u==v)return ;
+	if(id[u]>id[v])swap(u,v);
+//	cout<<"id:"<<u<<" "<<v<<endl;
+//	if(u==v)return ;
+	Mrev(1,n,id[u]+1,id[v],1);
 }
+void Query(int u,int v,int opt){
+	int ans=inf;
+	if(u==v){
+		printf("0\n");
+		return ;
+	}
+//	cout<<top[u]<<endl;
+//	cout<<u<<" "<<v<<endl;
+	while(top[u]!=top[v]){
+		if(dep[top[u]]<dep[top[v]])swap(u,v);
+		//cout<<111<<endl;
+		/*
+		cout<<"id:"<<u<<" "<<v<<endl;
+		cout<<"val:"<<query(1,n,id[top[u]],id[u],1,opt)<<endl;
+		 */
+		if(ans==inf)ans=query(1,n,id[top[u]],id[u],1,opt);
+		else {
+			if(opt==0)ans+=query(1,n,id[top[u]],id[u],1,opt);
+			if(opt==1)ans=max(ans,query(1,n,id[top[u]],id[u],1,opt));
+			if(opt==2)ans=min(ans,query(1,n,id[top[u]],id[u],1,opt));
+			
+		}
+		u=fa[top[u]];
+//		cout<<ans<<endl;
+	}
+//	cout<<u<<" "<<v<<endl;
+//	cout<<id[u]<<" "<<id[v]<<endl;
+	//cout<<"id:"<<u<<" "<<v<<endl;
+	if(u==v){
+		printf("%d\n",ans); 
+		return ;
+	}
+	if(id[u]>id[v])swap(u,v);
+	/*
+	cout<<"id:"<<id[u]<<" "<<id[v]<<endl;
+	cout<<"val:"<<query(1,n,id[u]+1,id[v],1,opt)<<endl;
+	cout<<ans<<endl;
+	*/
+	if(ans==inf)ans=query(1,n,id[u]+1,id[v],1,opt);
+	else {
+		if(opt==0)ans+=query(1,n,id[u]+1,id[v],1,opt);
+		if(opt==1)ans=max(ans,query(1,n,id[u]+1,id[v],1,opt));
+		if(opt==2)ans=min(ans,query(1,n,id[u]+1,id[v],1,opt));
+	}
+	printf("%d\n",ans); 
+}
+
 int main()
 {
+//	freopen("6.in","r",stdin);
+//	freopen("data.out","w",stdout);
 	n=read();
 	for(int i=1;i<n;i++){
-		int u=read(),v=read(),w=read();
+		int u=read()+1,v=read()+1,w=read();
 		add(u,v,w,i);
 		add(v,u,w,i);
 	}
-	tot=0;
+	tot=0;dep[1]=1;
 	dfs1(1,0);dfs2(1,1);
 	build(1,n,1);
+	/*
+	Query(152,479,0);
+//	C 478 390
+	//Change(id[eton[478]],390);
+	Query(152,479,0);
+	//Change(eton[3],-12331);
+//	SUM 1539 1638
+	//Query(1,5,0);
+	printf("%d\n",fa[479]);
+	*/
+	//printf("%d\n",id[4]);
+	//cout<<query(1,n,3,3,1,0)<<endl<<endl;;
+	//Query(1,4,0);
+	//cout<<111111<<endl;
+	/*
+	for(int i=1;i<=n;i++)
+		cout<<id[i]<<" ";
+	cout<<endl;
+	for(int i=1;i<=n;i++)
+		cout<<query(1,n,i,i,1,0)<<" ";
+	cout<<endl;
+	*/
+//	cout<<eton[1]<<endl;
+//	/*
 	int m=read();
 	for(int i=1;i<=m;i++){
+//		cerr<<i<<endl;
 		scanf("%s",opt);
 		int u,v;
 		u=read();v=read();
-		//if(opt[0]=='C')Change(u,v);
-		//if(opt[0]=='N')Reverse(u,v);
-		//if(opt[0]=='S')Query(u,v,0);
-		//if(opt[0]=='M'&&opt[1]=='A')Query(u,v,1);
-		//if(opt[0]=='M'&&opt[1]=='I')Query(u,v,2);
+//		/*
+//		if(i==7){
+//			cout<<endl<<endl<<endl;
+//			for(int i=1;i<=n;i++)
+//				cout<<query(1,n,i,i,1,0)<<" ";
+//			cout<<endl<<endl<<endl;
+//			cout<<endl;
+//		}
+//		*/
+		if(opt[0]=='C')Change(id[eton[u]],v);
+		u++;v++;
+		if(opt[0]=='N')Reverse(u,v);
+		if(opt[0]=='S')Query(u,v,0);
+		if(opt[0]=='M'&&opt[1]=='A')Query(u,v,1);
+		if(opt[0]=='M'&&opt[1]=='I')Query(u,v,2);
 	}
+	//*/
 	return 0;
 }
 
