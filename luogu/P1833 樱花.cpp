@@ -17,18 +17,18 @@ int main()
 	for(int i=1;i<=n;i++){
 		a=read();b=read();c=read();
 		if(c==0)g2[++t2]=(Ob){a,b};else
-		for(int j=1;j<=c;j<<=1)if(c&j)
-			g1[++t1]=(Ob){a*j,b*j}; 
+		for(int j=1;j<=c;j<<=1)g1[++t1]=(Ob){a*j,b*j},c-=j; 
+		if(c)g1[++t1]=(Ob){a*c,b*c};	
 	}
 	for(int k=1;k<=t1;k++)
-		for(int i=m;i>=0;i--){
-			f[i]=max(f[i],f[i-1]);
-			if(i-g1[k].w>0)f[i]=max(f[i],f[i-g1[k].w]+g1[k].v);
+		for(int i=m;i>=g1[k].w;i--){
+			//f[i]=max(f[i],f[i-1]);
+			f[i]=max(f[i],f[i-g1[k].w]+g1[k].v);
 		}
 	for(int k=1;k<=t2;k++)
-		for(int i=0;i<=m;i++){
-			f[i]=max(f[i],f[i-1]);
-			if(i-g2[k].w>0)f[i]=max(f[i],f[i-g2[k].w]+g2[k].v);
+		for(int i=g2[k].w;i<=m;i++){
+			//f[i]=max(f[i],f[i-1]);
+			f[i]=max(f[i],f[i-g2[k].w]+g2[k].v);
 		}
 	printf("%d\n",f[m]);
 	return 0;
